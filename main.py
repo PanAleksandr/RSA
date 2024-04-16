@@ -1,143 +1,106 @@
 import math
 import random
 
-def is_prime(number):
-    if number < 2:
-        return False
-    for i in range(2, number // 2 + 1):
-        if number % i == 0:
+def is_prime(number):  #Pirminis skaičius
+    if number < 2:  # jei skaičius mažesnis nei 2
+        return False  # jeigu sk < 2, tai tai nėra pirminis skaičius
+    for i in range(2, number // 2 + 1):  #daliklius nuo 2 iki number // 2 + 1
+        if number % i == 0:  # Jei sk dalijasi be liekanos i, tai jis nėra pirminis
             return False
-    return True
+    return True  # nėra daliklių = pirminis
+
 
 def mod_inverse(e, phi):
-    for d in range(3, phi):
-        if (d * e) % phi == 1:
+    for d in range(3, phi):  # Einame per galimus d reikšmes
+        if (d * e) % phi == 1:  # Patikriname, ar d yra atvirkštinis po moduliu e
             return d
-    raise ValueError("Обратный модуль не существует")
+    raise ValueError("Modular inverse does not exist")
 
-# Функция генерации простого числа
-def generate_prime(min_value, max_value):
-    prime = random.randint(min_value, max_value)
-    while not is_prime(prime):
-        prime = random.randint(min_value, max_value)
-    return prime
+def write_to_file(filename, data):  # funkcija irasyti duomenis i faila
+    with open(filename, "w") as file:  # open
+        file.write(data)  # write
 
-# Функция для записи в файл
-def write_to_file(filename, data):
-    with open(filename, "w") as file:
-        file.write(data)
-
-# Функция для чтения из файла
-def read_from_file(filename):
-    with open(filename, "r") as file:
+def read_from_file(filename):  # Funkcija skaito duomenis iš failo
+    with open(filename, "r") as file:  # Atidarome failą skaitymui
         return file.read()
+def euklido_algoritmas(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
 
-action = input("Выберите действие (1 - шифрование, 2 - расшифровка): ")
+action = input("Choose action (1 - encryption, 2 - decryption): ")
 
-if action == "1":
-    # Ввод простого числа p
-    while True:
-        p = int(input("Введите простое число p: "))
+if action == "1":  # 1
+    while True: # Begalinis ciklas, skirtas įvesti pirminį skaičių p
+        p = int(input("Enter prime number p: "))
         if is_prime(p):
             break
         else:
-            print("Это не простое число. Попробуйте еще раз.")
+            print("This is not a prime number. Please try again.")
 
-    # Ввод простого числа q
     while True:
-        q = int(input("Введите простое число q: "))
+        q = int(input("Enter prime number q: "))
         if is_prime(q):
             break
         else:
-            print("Это не простое число. Попробуйте еще раз.")
+            print("This is not a prime number. Please try again.")
 
     n = p * q
-    phi_n = (p - 1) * (q - 1)
+    phi_n = (p - 1) * (q - 1)  # for n
 
-    # Выбор публичного ключа e
-    e = random.randint(3, phi_n - 1)
-    while math.gcd(e, phi_n) != 1:
-        e = random.randint(3, phi_n - 1)
+    e = random.randint(3, phi_n - 1)  # Generuojamas atsitiktinis e iš intervalo [3, phi_n - 1]
+    while euklido_algoritmas(e, phi_n) != 1:  # Tikrinama, ar e ir phi_n yra tarpusavyje pirminiai
+        e = random.randint(3, phi_n - 1)  # Jei ne, generuojamas naujas atsitiktinis e
 
-    # Вычисление приватного ключа d
-    d = mod_inverse(e, phi_n)
+    d = mod_inverse(e, phi_n) #d, kuris yra atvirkštinis e mod phi_n
 
-    print("Открытый ключ:", e)
-    print("Закрытый ключ:", d)
-    print("n:", n)
-    print("Фи(n):", phi_n)
-    print("p:", p)
-    print("q:", q)
+    print("Public key:", e)  #  e
+    print("Private key:", d)  #  d
+    print("n:", n)  #  n
+    print("Phi(n):", phi_n)  # Φ[n]
+    print("p:", p)  # 1 p
+    print("q:", q)  # 2 q
 
-    # Шифрование сообщения
-    message = input("Введите сообщение для шифрования: ")
+    message = input("Enter message to encrypt: ")  # kazkoks zodis
 
-    message_encoded = [ord(ch) for ch in message]
-    ciphertext = [pow(ch, e, n) for ch in message_encoded]
+    message_encoded = [ord(ch) for ch in message]  # paverčia pranešimą į skaitinį formatą, naudodama ASCII kodavimą
+    ciphertext = [pow(ch, e, n) for ch in message_encoded]  # šifruoja pranešimą naudojant RSA algoritmą
 
-    # Сохранение открытого ключа в файл
-    write_to_file("public_key.txt", f"{e} {n}")
+    write_to_file("public_key.txt", f"{e} {n}")  # publik key and n write to the file
+    write_to_file("encrypted_text.txt", " ".join(map(str, ciphertext)))  # text
 
+    print("Cipher text saved in 'encrypted_text.txt'.")  # good
 
-    # Сохранение зашифрованного текста в файл
-    write_to_file("encrypted_text.txt", " ".join(map(str, ciphertext)))
+elif action == "2":  # 2
+    def find_factors(n):  # Funkcija skirta rasti skaičiaus n daliklius
+        for i in range(2, int(n ** 0.5) + 1):  # Einame per skaičius nuo 2 iki n kvadratinio šaknies
+            if n % i == 0:  # Tikriname, ar n dalijasi be liekanos iš šio skaičiaus
+                return i, n // i  # Jei taip, grąžiname daliklio porą (i, n // i)
+        return None, None  # Jei daliklis nerastas, grąžiname None, None
 
-    print("Шифротекст сохранен в файле 'encrypted_text.txt'.")
+    n = int(input("Enter number n: "))  #  n
 
-elif action == "2":
-    def find_factors(n):
-        for i in range(2, int(n ** 0.5) + 1):
-            if n % i == 0:
-                return i, n // i
-        return None, None
+    p, q = find_factors(n)  # find p,q
 
+    def phi(n, p, q):  # Apskaičiuojame Eulerio funkciją φ(n)
+        return (p - 1) * (q - 1)  # Grąžiname Eulerio funkcijos reikšmę
 
-    # Įvedimas n iš konsolės
-    n = int(input("Įveskite skaičių n: "))
+    phi_n = phi(n, p, q)  # Apskaičiuojame Eulerio funkciją φ(n) naudojant skaičius p ir q
 
-    # Surasti pirminius faktorius
-    p, q = find_factors(n)
-    print("Pirmas pirminis faktorius:", p)
-    print("Antras pirminis faktorius:", q)
+    e = int(input("Enter public key (e): "))  # pub
 
+    d = mod_inverse(e, phi_n)  # private
 
-    def phi(n, p, q):
-        return (p - 1) * (q - 1)
+    print("Private key (d):", d)  # rodo d
 
+    ciphertext_data = read_from_file("encrypted_text.txt")  # check text
+    ciphertext_parts = ciphertext_data.split()  # by part
+    ciphertext = [int(ch) for ch in ciphertext_parts]  # paverčia kiekvieną užšifruoto teksto fragmentą iš teksto į sveikąjį skaičių.
 
-    # Naudodami gautus pirminius faktorius p ir q, suskaičiuokite Φ(n)
-    phi_n = phi(n, p, q)
-    print("Φ(n):", phi_n)
+    decrypted_message_encoded = [pow(ch, d, n) for ch in ciphertext]  # decrypt
+    decrypted_message = "".join(chr(ch) for ch in decrypted_message_encoded)  # užšifruotas tekstas paverčia į simbolius.
 
-
-
-    def mod_inverse(e, phi):
-        for d in range(3, phi):
-            if (d * e) % phi == 1:
-                return d
-        raise ValueError("Modulinis atvirkštinis neegzistuoja")
-
-
-    # Įvedimas viešo rakto e
-    e = int(input("Įveskite viešą raktą (e): "))
-
-    # Skaičiuojame φ(n)
-    phi_n = phi(n, p, q)
-
-    # Skaičiuojame privataus rakto d
-    d = mod_inverse(e, phi_n)
-
-    print("Privatus raktas (d):", d)
-
-    # Чтение зашифрованного текста из файла
-    ciphertext_data = read_from_file("encrypted_text.txt")
-    ciphertext_parts = ciphertext_data.split()
-    ciphertext = [int(ch) for ch in ciphertext_parts]
-
-    decrypted_message_encoded = [pow(ch, d, n) for ch in ciphertext]
-    decrypted_message = "".join(chr(ch) for ch in decrypted_message_encoded)
-
-    print("Расшифрованное сообщение:", decrypted_message)
+    print("Decrypted message:", decrypted_message)
 
 else:
-    print("Неверный выбор действия.")
+    print("Invalid action choice.")
